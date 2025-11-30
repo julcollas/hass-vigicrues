@@ -89,32 +89,27 @@ class VigicruesSensor(Entity):
         """Initialize the sensor."""
         self.station = station
         self._type = _type
-        self._name = f"Vigicrues {self.station.name} {self.name_type()}"
         self._attr_extra_state_attributes = {
             ATTR_LONGITUDE: self.station.coordinates[0],
             ATTR_LATITUDE: self.station.coordinates[1],
+            "LbStationHydro": self.station.LbStationHydro,
+            "CdCommune": self.station.CdCommune,
+            "LbCoursEau": self.station.LbCoursEau,
+            "station_id": self.station.station_id,
+            "type": self._type,
+            "friendly_name": f"Vigicrues {self.station.LbStationHydro} {self.station.station_id} {self.name_type()}"
         }
+        self._attr_unique_id = slugify(f"{self.station.station_id}_{self._type}")
         self._attr_entity_picture = station.get_entity_picture()
 
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return the unique id of the sensor."""
-        return slugify(self._name)
+    def name_type(self):
+        """Return the name of the type."""
+        return METRICS_INFO.get(self._type).get("name")
 
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return METRICS_INFO.get(self._type).get("unit")
-
-    def name_type(self):
-        """Return the name of the type."""
-        return METRICS_INFO.get(self._type).get("name")
 
 
 class VigicruesHeightSensor(VigicruesSensor):
@@ -167,10 +162,26 @@ class Vigicrues(object):
     def __init__(self, station_id):
         """Initialize"""
         self.station_id = station_id
-        self.name = self.get_name()
+        station_info = self.get_station()
+        self.LbStationHydro = station_info.get("LbStationHydro")
+        self.CdCommune = station_info.get("CdCommune")
+        self.LbCoursEau = station_info.get("LbCoursEau")
         self.waterflowrate = None
         self.height = None
         self.coordinates = self.get_coordinates()
+
+    def get_station(self):
+        """ Get Station info from VIGICRUE """
+        params = {"CdStationHydro": self.station_id}
+
+        try:
+            data = requests.get(VIGICRUES_STATION_API, params=params, timeout=10)
+            data.raise_for_status()
+        except Exception:
+            _LOGGER.error("Unable to get data from %s", VIGICRUES_STATION_API)
+            raise Exception("Unable to get data")
+
+        return data.json()
 
     def get_height(self):
         return self.__get_last_point("H")
@@ -178,34 +189,23 @@ class Vigicrues(object):
     def get_waterflowrate(self):
         return self.__get_last_point("Q")
 
-    def get_name(self):
-        serie_data = self.get_data("H").get("Serie")
-        return f"{serie_data.get('LbStationHydro')} - {serie_data.get('CdStationHydro')}"
-
-    def get_data(self, _type):
+    def get_observations(self, _type):
+        """ Get Station's Observations from VIGICRUE """
         params = {"CdStationHydro": self.station_id, "GrdSerie": _type}
 
         try:
-            data = requests.get(VIGICRUES_OBSERVATIONS_API, params=params)
+            data = requests.get(VIGICRUES_OBSERVATIONS_API, params=params, timeout=10)
             data.raise_for_status()
         except Exception:
-            _LOGGER.error("Unable to get data from %s", VIGICRUES_OBSERVATIONS_API)
-            raise Exception("Unable to get data")
+            _LOGGER.exception("Unable to get observations from %s", VIGICRUES_OBSERVATIONS_API)
+            raise Exception("Unable to get observations")
 
         return data.json()
 
     def get_coordinates(self):
         """ Get coordinates from VIGICRUE and transform them in longitude and latitute """
-        params = {"CdStationHydro": self.station_id}
 
-        try:
-            data = requests.get(VIGICRUES_STATION_API, params=params)
-            data.raise_for_status()
-        except Exception:
-            _LOGGER.error("Unable to get coordinates from %s", VIGICRUES_STATION_API)
-            raise Exception("Unable to get data")
-
-        coordstation = data.json().get("CoordStationHydro")
+        coordstation = self.get_station().get("CoordStationHydro")
         coordx, coordy = coordstation.get("CoordXStationHydro"), coordstation.get("CoordYStationHydro")
 
         # Coordinate transformation
@@ -214,9 +214,10 @@ class Vigicrues(object):
         return (longitude, latitude)
 
     def get_entity_picture(self):
+        """ Get Entity picture from VIGICRUE """
         url_picture = f"{VIGICRUES_PICTURE}/photo_{self.station_id}.jpg"
         try:
-            response = requests.get(url_picture)
+            response = requests.get(url_picture, timeout=10)
             response.raise_for_status()
         except Exception:
             return ""
@@ -224,8 +225,9 @@ class Vigicrues(object):
             return url_picture
 
     def __get_last_point(self, _type):
+        """ Get last metric point """
         try:
-            return self.get_data(_type)["Serie"]["ObssHydro"][-1]["ResObsHydro"]
+            return self.get_observations(_type)["Serie"]["ObssHydro"][-1]["ResObsHydro"]
         except Exception:
             return
 
