@@ -6,7 +6,7 @@ import voluptuous as vol
 import math
 
 from homeassistant.helpers.entity import Entity
-from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorDeviceClass
+from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorDeviceClass, SensorStateClass
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
 from homeassistant.util import slugify
@@ -95,7 +95,7 @@ class VigicruesSensor(Entity):
             ATTR_LATITUDE: self.station.coordinates[1],
         }
         self._attr_entity_picture = station.get_entity_picture()
-
+        self._attr_device_class = SensorStateClass.MEASUREMENT
 
     @property
     def name(self):
@@ -189,7 +189,8 @@ class Vigicrues(object):
             data = requests.get(VIGICRUES_OBSERVATIONS_API, params=params)
             data.raise_for_status()
         except Exception:
-            _LOGGER.error("Unable to get data from %s", VIGICRUES_OBSERVATIONS_API)
+            _LOGGER.error("Unable to get data from %s",
+                          VIGICRUES_OBSERVATIONS_API)
             raise Exception("Unable to get data")
 
         return data.json()
@@ -202,11 +203,13 @@ class Vigicrues(object):
             data = requests.get(VIGICRUES_STATION_API, params=params)
             data.raise_for_status()
         except Exception:
-            _LOGGER.error("Unable to get coordinates from %s", VIGICRUES_STATION_API)
+            _LOGGER.error("Unable to get coordinates from %s",
+                          VIGICRUES_STATION_API)
             raise Exception("Unable to get data")
 
         coordstation = data.json().get("CoordStationHydro")
-        coordx, coordy = coordstation.get("CoordXStationHydro"), coordstation.get("CoordYStationHydro")
+        coordx, coordy = coordstation.get(
+            "CoordXStationHydro"), coordstation.get("CoordYStationHydro")
 
         # Coordinate transformation
         latitude, longitude = lambert93_to_wgs84(int(coordx), int(coordy))
