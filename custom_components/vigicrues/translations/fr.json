@@ -1,0 +1,53 @@
+{
+  "entity": {
+    "sensor": {
+      "height": {
+        "name": "Hauteur"
+      },
+      "waterflowrate": {
+        "name": "Débit"
+      }
+    }
+  },
+  "config": {
+    "step": {
+      "user": {
+        "title": "Configuration de Vigicrues",
+        "description": "Entrez les identifiants ou les URLs des stations que vous souhaitez surveiller (séparés par des virgules). Vous pouvez également laisser vide et ajouter les stations plus tard. Vous pouvez copier l'URL depuis https://www.vigicrues.gouv.fr/",
+        "data": {
+          "stations": "Stations (IDs ou URLs) - optionnel"
+        },
+        "data_description": {
+          "stations": "Liste d'identifiants ou d'URLs de stations séparés par des virgules. Laissez vide pour configurer plus tard. Exemple : {stations_example}"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter à l'API Vigicrues",
+      "invalid_station": "Identifiant de station invalide",
+      "unknown": "Erreur inconnue"
+    },
+    "abort": {
+      "already_configured": "Ces stations sont déjà configurées"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Modifier la configuration de Vigicrues",
+        "description": "Modifiez les identifiants ou les URLs des stations que vous souhaitez surveiller (séparés par des virgules). Laissez vide pour supprimer toutes les stations.",
+        "data": {
+          "stations": "Stations (IDs ou URLs) - optionnel"
+        },
+        "data_description": {
+          "stations": "Liste d'identifiants ou d'URLs de stations séparés par des virgules. Laissez vide pour supprimer toutes les stations. Exemple : {stations_example}"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Impossible de se connecter à l'API Vigicrues",
+      "invalid_station": "Identifiant de station invalide",
+      "unknown": "Erreur inconnue"
+    }
+  }
+}
