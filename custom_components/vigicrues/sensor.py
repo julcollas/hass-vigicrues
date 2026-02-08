@@ -4,7 +4,7 @@ import logging
 import requests
 import voluptuous as vol
 
-from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorDeviceClass, SensorEntity
+from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorDeviceClass, SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
 from homeassistant.core import HomeAssistant
@@ -216,13 +216,14 @@ class VigicruesCoordinatorHeightSensor(CoordinatorEntity, SensorEntity):
     """Representation of Vigicrues Height Sensor using coordinator."""
 
     _attr_device_class = SensorDeviceClass.DISTANCE
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:waves-arrow-up"
+    _attr_translation_key = "height"
 
     def __init__(self, coordinator: VigicruesDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = slugify(f"{coordinator.station_id}_H")
-        self._attr_name = "Hauteur"
         self._attr_has_entity_name = True
 
     @property
@@ -262,13 +263,14 @@ class VigicruesCoordinatorWaterFlowRateSensor(CoordinatorEntity, SensorEntity):
     """Representation of Vigicrues WaterFlow Sensor using coordinator."""
 
     _attr_device_class = SensorDeviceClass.VOLUME_FLOW_RATE
+    _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_icon = "mdi:waves"
+    _attr_translation_key = "waterflowrate"
 
     def __init__(self, coordinator: VigicruesDataUpdateCoordinator) -> None:
         """Initialize the sensor."""
         super().__init__(coordinator)
         self._attr_unique_id = slugify(f"{coordinator.station_id}_Q")
-        self._attr_name = "Débit"
         self._attr_has_entity_name = True
 
     @property

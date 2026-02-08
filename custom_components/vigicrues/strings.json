@@ -2,10 +2,10 @@
   "entity": {
     "sensor": {
       "height": {
-        "name": "Hauteur"
+        "name": "Hauteur d'eau"
       },
       "waterflowrate": {
-        "name": "Débit"
+        "name": "Débit d'eau"
       }
     }
   },
