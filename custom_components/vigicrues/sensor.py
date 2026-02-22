@@ -3,15 +3,20 @@ from datetime import timedelta
 import logging
 import requests
 import voluptuous as vol
-import math
 
-from homeassistant.helpers.entity import Entity
-from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorDeviceClass
-import homeassistant.helpers.config_validation as cv
+from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorDeviceClass, SensorEntity, SensorStateClass
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import ATTR_LATITUDE, ATTR_LONGITUDE
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity import Entity, DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+import homeassistant.helpers.config_validation as cv
 from homeassistant.util import slugify
 
-from .const import CONF_STATIONS, VIGICRUES_OBSERVATIONS_API, VIGICRUES_STATION_API, METRICS_INFO, VIGICRUES_PICTURE
+from .const import CONF_STATIONS, DOMAIN, VIGICRUES_OBSERVATIONS_API, VIGICRUES_STATION_API, METRICS_INFO, VIGICRUES_PICTURE
+from .coordinator import VigicruesDataUpdateCoordinator
+from .utils import lambert93_to_wgs84
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -35,51 +40,22 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
     add_entities(sensors, True)
 
 
-def lambert93_to_wgs84(x, y):
-    """
-    Converts Lambert 93 coordinates (x, y) to WGS84 geographic coordinates (latitude, longitude).
+async def async_setup_entry(
+    hass: HomeAssistant,
+    config_entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up Vigicrues sensors from a config entry."""
+    coordinators: dict[str, VigicruesDataUpdateCoordinator] = hass.data[DOMAIN][
+        config_entry.entry_id
+    ]
 
-    Parameters:
-        x (float): The X-coordinate in Lambert 93 (meters).
-        y (float): The Y-coordinate in Lambert 93 (meters).
+    entities = []
+    for station_id, coordinator in coordinators.items():
+        entities.append(VigicruesCoordinatorHeightSensor(coordinator))
+        entities.append(VigicruesCoordinatorWaterFlowRateSensor(coordinator))
 
-    Returns:
-        tuple: A tuple containing:
-            - latitude (float): Latitude in WGS84 (degrees).
-            - longitude (float): Longitude in WGS84 (degrees).
-    """
-    # Constants for the Lambert 93 projection
-    a = 6378137.0  # Semi-major axis of the GRS80 ellipsoid
-    e = 0.0818191910428158  # Ellipsoid eccentricity
-    n = 0.7256077650532670  # Projection scale factor
-    c = 11754255.4261  # Projection constant
-    Xs = 700000.0  # X-coordinate of the false origin
-    Ys = 12655612.0499  # Y-coordinate of the false origin
-    lambda0 = 3 * math.pi / 180  # Central meridian (3°E in radians)
-
-    # Calculate the polar radius (distance to the origin in the Lambert 93 projection)
-    r = math.sqrt((x - Xs)**2 + (y - Ys)**2)
-
-    # Calculate the polar angle (angle from the origin)
-    gamma = math.atan((x - Xs) / (Ys - y))
-
-    # Compute the isometric latitude
-    l = -math.log(abs(r / c)) / n
-    lat_iso = 2 * math.atan(math.exp(l)) - math.pi / 2
-
-    # Iteratively compute the geographic latitude
-    phi = lat_iso
-    for _ in range(7):  # Use 7 iterations to ensure precision
-        phi = 2 * math.atan(
-            ((1 + e * math.sin(phi)) / (1 - e * math.sin(phi)))**(e / 2) * math.exp(l)
-        ) - math.pi / 2
-
-    # Compute the geographic longitude
-    lon = lambda0 + gamma / n
-    lat = phi
-
-    # Convert latitude and longitude from radians to degrees
-    return math.degrees(lat), math.degrees(lon)
+    async_add_entities(entities)
 
 
 class VigicruesSensor(Entity):
@@ -89,32 +65,27 @@ class VigicruesSensor(Entity):
         """Initialize the sensor."""
         self.station = station
         self._type = _type
-        self._name = f"Vigicrues {self.station.name} {self.name_type()}"
         self._attr_extra_state_attributes = {
             ATTR_LONGITUDE: self.station.coordinates[0],
             ATTR_LATITUDE: self.station.coordinates[1],
+            "LbStationHydro": self.station.LbStationHydro,
+            "CdCommune": self.station.CdCommune,
+            "LbCoursEau": self.station.LbCoursEau,
+            "station_id": self.station.station_id,
+            "type": self._type,
+            "friendly_name": f"Vigicrues {self.station.LbStationHydro} {self.station.station_id} {self.name_type()}"
         }
+        self._attr_unique_id = slugify(f"{self.station.station_id}_{self._type}")
         self._attr_entity_picture = station.get_entity_picture()
 
-
-    @property
-    def name(self):
-        """Return the name of the sensor."""
-        return self._name
-
-    @property
-    def unique_id(self):
-        """Return the unique id of the sensor."""
-        return slugify(self._name)
+    def name_type(self):
+        """Return the name of the type."""
+        return METRICS_INFO.get(self._type).get("name")
 
     @property
     def unit_of_measurement(self):
         """Return the unit of measurement."""
         return METRICS_INFO.get(self._type).get("unit")
-
-    def name_type(self):
-        """Return the name of the type."""
-        return METRICS_INFO.get(self._type).get("name")
 
 
 class VigicruesHeightSensor(VigicruesSensor):
@@ -167,10 +138,26 @@ class Vigicrues(object):
     def __init__(self, station_id):
         """Initialize"""
         self.station_id = station_id
-        self.name = self.get_name()
+        station_info = self.get_station()
+        self.LbStationHydro = station_info.get("LbStationHydro")
+        self.CdCommune = station_info.get("CdCommune")
+        self.LbCoursEau = station_info.get("LbCoursEau")
         self.waterflowrate = None
         self.height = None
         self.coordinates = self.get_coordinates()
+
+    def get_station(self):
+        """ Get Station info from VIGICRUE """
+        params = {"CdStationHydro": self.station_id}
+
+        try:
+            data = requests.get(VIGICRUES_STATION_API, params=params, timeout=10)
+            data.raise_for_status()
+        except Exception:
+            _LOGGER.error("Unable to get data from %s", VIGICRUES_STATION_API)
+            raise Exception("Unable to get data")
+
+        return data.json()
 
     def get_height(self):
         return self.__get_last_point("H")
@@ -178,34 +165,23 @@ class Vigicrues(object):
     def get_waterflowrate(self):
         return self.__get_last_point("Q")
 
-    def get_name(self):
-        serie_data = self.get_data("H").get("Serie")
-        return f"{serie_data.get('LbStationHydro')} - {serie_data.get('CdStationHydro')}"
-
-    def get_data(self, _type):
+    def get_observations(self, _type):
+        """ Get Station's Observations from VIGICRUE """
         params = {"CdStationHydro": self.station_id, "GrdSerie": _type}
 
         try:
-            data = requests.get(VIGICRUES_OBSERVATIONS_API, params=params)
+            data = requests.get(VIGICRUES_OBSERVATIONS_API, params=params, timeout=10)
             data.raise_for_status()
         except Exception:
-            _LOGGER.error("Unable to get data from %s", VIGICRUES_OBSERVATIONS_API)
-            raise Exception("Unable to get data")
+            _LOGGER.exception("Unable to get observations from %s", VIGICRUES_OBSERVATIONS_API)
+            raise Exception("Unable to get observations")
 
         return data.json()
 
     def get_coordinates(self):
         """ Get coordinates from VIGICRUE and transform them in longitude and latitute """
-        params = {"CdStationHydro": self.station_id}
 
-        try:
-            data = requests.get(VIGICRUES_STATION_API, params=params)
-            data.raise_for_status()
-        except Exception:
-            _LOGGER.error("Unable to get coordinates from %s", VIGICRUES_STATION_API)
-            raise Exception("Unable to get data")
-
-        coordstation = data.json().get("CoordStationHydro")
+        coordstation = self.get_station().get("CoordStationHydro")
         coordx, coordy = coordstation.get("CoordXStationHydro"), coordstation.get("CoordYStationHydro")
 
         # Coordinate transformation
@@ -214,9 +190,10 @@ class Vigicrues(object):
         return (longitude, latitude)
 
     def get_entity_picture(self):
+        """ Get Entity picture from VIGICRUE """
         url_picture = f"{VIGICRUES_PICTURE}/photo_{self.station_id}.jpg"
         try:
-            response = requests.get(url_picture)
+            response = requests.get(url_picture, timeout=10)
             response.raise_for_status()
         except Exception:
             return ""
@@ -224,11 +201,106 @@ class Vigicrues(object):
             return url_picture
 
     def __get_last_point(self, _type):
+        """ Get last metric point """
         try:
-            return self.get_data(_type)["Serie"]["ObssHydro"][-1]["ResObsHydro"]
+            return self.get_observations(_type)["Serie"]["ObssHydro"][-1]["ResObsHydro"]
         except Exception:
             return
 
     def update(self):
         self.waterflowrate = self.get_waterflowrate()
         self.height = self.get_height()
+
+
+class VigicruesCoordinatorHeightSensor(CoordinatorEntity, SensorEntity):
+    """Representation of Vigicrues Height Sensor using coordinator."""
+
+    _attr_device_class = SensorDeviceClass.DISTANCE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:waves-arrow-up"
+    _attr_translation_key = "height"
+
+    def __init__(self, coordinator: VigicruesDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = slugify(f"{coordinator.station_id}_H")
+        self._attr_has_entity_name = True
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this sensor."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.coordinator.station_id)},
+            name=self.coordinator.data.get("station_name", f"Station {self.coordinator.station_id}"),
+            manufacturer="Vigicrues",
+            model="Station hydrométrique",
+            configuration_url=f"https://www.vigicrues.gouv.fr/station/{self.coordinator.station_id}",
+        )
+
+    @property
+    def native_value(self):
+        """Return the state of the sensor."""
+        return self.coordinator.data.get("height")
+
+    @property
+    def native_unit_of_measurement(self):
+        """Return the unit of measurement."""
+        return METRICS_INFO.get("H").get("unit")
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        coordinates = self.coordinator.data.get("coordinates", (None, None))
+        return {
+            ATTR_LONGITUDE: coordinates[0],
+            ATTR_LATITUDE: coordinates[1],
+            "station_id": self.coordinator.station_id,
+            "type": "H",
+        }
+
+
+class VigicruesCoordinatorWaterFlowRateSensor(CoordinatorEntity, SensorEntity):
+    """Representation of Vigicrues WaterFlow Sensor using coordinator."""
+
+    _attr_device_class = SensorDeviceClass.VOLUME_FLOW_RATE
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:waves"
+    _attr_translation_key = "waterflowrate"
+
+    def __init__(self, coordinator: VigicruesDataUpdateCoordinator) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self._attr_unique_id = slugify(f"{coordinator.station_id}_Q")
+        self._attr_has_entity_name = True
+
+    @property
+    def device_info(self) -> DeviceInfo:
+        """Return device information about this sensor."""
+        return DeviceInfo(
+            identifiers={(DOMAIN, self.coordinator.station_id)},
+            name=self.coordinator.data.get("station_name", f"Station {self.coordinator.station_id}"),
+            manufacturer="Vigicrues",
+            model="Station hydrométrique",
+            configuration_url=f"https://www.vigicrues.gouv.fr/station/{self.coordinator.station_id}",
+        )
+
+    @property
+    def native_value(self):
+        """Return the state of the sensor."""
+        return self.coordinator.data.get("waterflowrate")
+
+    @property
+    def native_unit_of_measurement(self):
+        """Return the unit of measurement."""
+        return METRICS_INFO.get("Q").get("unit")
+
+    @property
+    def extra_state_attributes(self):
+        """Return the state attributes."""
+        coordinates = self.coordinator.data.get("coordinates", (None, None))
+        return {
+            ATTR_LONGITUDE: coordinates[0],
+            ATTR_LATITUDE: coordinates[1],
+            "station_id": self.coordinator.station_id,
+            "type": "Q",
+        }

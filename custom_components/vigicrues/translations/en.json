@@ -1,0 +1,53 @@
+{
+  "entity": {
+    "sensor": {
+      "height": {
+        "name": "Height"
+      },
+      "waterflowrate": {
+        "name": "Flow Rate"
+      }
+    }
+  },
+  "config": {
+    "step": {
+      "user": {
+        "title": "Vigicrues Configuration",
+        "description": "Enter the station IDs or URLs you want to monitor (comma-separated). You can also leave empty and add stations later. You can copy the URL from https://www.vigicrues.gouv.fr/",
+        "data": {
+          "stations": "Stations (IDs or URLs) - optional"
+        },
+        "data_description": {
+          "stations": "List of station IDs or URLs separated by commas. Leave empty to configure later. Example: {stations_example}"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to Vigicrues API",
+      "invalid_station": "Invalid station ID",
+      "unknown": "Unknown error"
+    },
+    "abort": {
+      "already_configured": "These stations are already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Modify Vigicrues Configuration",
+        "description": "Modify the station IDs or URLs you want to monitor (comma-separated). Leave empty to remove all stations.",
+        "data": {
+          "stations": "Stations (IDs or URLs) - optional"
+        },
+        "data_description": {
+          "stations": "List of station IDs or URLs separated by commas. Leave empty to remove all stations. Example: {stations_example}"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot connect to Vigicrues API",
+      "invalid_station": "Invalid station ID",
+      "unknown": "Unknown error"
+    }
+  }
+}

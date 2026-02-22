@@ -1,5 +1,6 @@
 from homeassistant.const import UnitOfLength
 
+DOMAIN = "vigicrues"
 CONF_STATIONS = "stations"
 VIGICRUES_URL = "https://www.vigicrues.gouv.fr"
 VIGICRUES_PICTURE = f"{VIGICRUES_URL}/ftp/niv3/photos"

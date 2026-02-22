@@ -2,9 +2,11 @@
   "domain": "vigicrues",
   "name": "VigiCrues",
   "codeowners": ["@julcollas"],
+  "config_flow": true,
+  "single_config_entry": true,
   "documentation": "https://github.com/julcollas/hass-vigicrues",
   "iot_class": "cloud_polling",
   "issue_tracker": "https://github.com/julcollas/hass-vigicrues/issues",
   "requirements": ["requests"],
-  "version": "0.0.5"
+  "version": "0.0.6"
 }
