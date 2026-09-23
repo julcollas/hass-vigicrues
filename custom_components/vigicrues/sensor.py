@@ -238,6 +238,11 @@ class VigicruesCoordinatorHeightSensor(CoordinatorEntity, SensorEntity):
         )
 
     @property
+    def entity_picture(self) -> str | None:
+        """Return the station picture."""
+        return self.coordinator.station.get_entity_picture()
+
+    @property
     def native_value(self):
         """Return the state of the sensor."""
         return self.coordinator.data.get("height")
@@ -283,6 +288,11 @@ class VigicruesCoordinatorWaterFlowRateSensor(CoordinatorEntity, SensorEntity):
             model="Station hydrométrique",
             configuration_url=f"https://www.vigicrues.gouv.fr/station/{self.coordinator.station_id}",
         )
+
+    @property
+    def entity_picture(self) -> str | None:
+        """Return the station picture."""
+        return self.coordinator.station.get_entity_picture()
 
     @property
     def native_value(self):
