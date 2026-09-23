@@ -10,7 +10,7 @@ import requests
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .const import VIGICRUES_OBSERVATIONS_API, VIGICRUES_STATION_API
+from .const import VIGICRUES_OBSERVATIONS_API, VIGICRUES_PICTURE, VIGICRUES_STATION_API
 from .utils import lambert93_to_wgs84
 
 _LOGGER = logging.getLogger(__name__)
@@ -31,6 +31,10 @@ class VigicruesDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             name=f"Vigicrues {station_id}",
             update_interval=timedelta(minutes=30),
         )
+
+    def get_entity_picture(self) -> str:
+        """Return the station picture URL."""
+        return f"{VIGICRUES_PICTURE}/photo_{self.station_id}.jpg"
 
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from Vigicrues API."""

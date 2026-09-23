@@ -240,7 +240,7 @@ class VigicruesCoordinatorHeightSensor(CoordinatorEntity, SensorEntity):
     @property
     def entity_picture(self) -> str | None:
         """Return the station picture."""
-        return self.coordinator.station.get_entity_picture()
+        return self.coordinator.get_entity_picture()
 
     @property
     def native_value(self):
@@ -292,7 +292,7 @@ class VigicruesCoordinatorWaterFlowRateSensor(CoordinatorEntity, SensorEntity):
     @property
     def entity_picture(self) -> str | None:
         """Return the station picture."""
-        return self.coordinator.station.get_entity_picture()
+        return self.coordinator.get_entity_picture()
 
     @property
     def native_value(self):
