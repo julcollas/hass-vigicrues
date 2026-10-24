@@ -19,6 +19,10 @@ Copy the `vigicrues` folder into `<config_dir>/custom_components/vigicrues/`.
    - **Mixed**: `F700000103, https://www.vigicrues.gouv.fr/station/F704000101`
 5. Click **Submit**
 
+Hub'Eau search results are checked against Vigicrues before setup. Some stations
+may not be available through Vigicrues; if validation fails, adjust the
+selection or use manual entry.
+
 Station IDs can be found on https://www.vigicrues.gouv.fr/
 You can also copy the URL directly from your browser.
 
