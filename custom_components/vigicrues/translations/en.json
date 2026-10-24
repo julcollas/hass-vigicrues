@@ -12,7 +12,14 @@
   "config": {
     "step": {
       "user": {
-        "title": "Vigicrues Configuration",
+        "title": "Add Vigicrues stations",
+        "menu_options": {
+          "search": "Search for a station",
+          "manual": "Enter station IDs or URLs"
+        }
+      },
+      "manual": {
+        "title": "Enter stations manually",
         "description": "Enter the station IDs or URLs you want to monitor (comma-separated). You can also leave empty and add stations later. You can copy the URL from https://www.vigicrues.gouv.fr/",
         "data": {
           "stations": "Stations (IDs or URLs) - optional"
@@ -20,10 +27,29 @@
         "data_description": {
           "stations": "List of station IDs or URLs separated by commas. Leave empty to configure later. Example: {stations_example}"
         }
+      },
+      "search": {
+        "title": "Search for stations",
+        "description": "Search by place or watercourse name. Only active stations are shown.",
+        "data": {
+          "search": "Commune, place, or watercourse"
+        }
+      },
+      "select_stations": {
+        "title": "Select stations",
+        "description": "Choose one or more stations. Some Hub'Eau stations may not be available in Vigicrues.",
+        "data": {
+          "stations": "Stations"
+        }
       }
     },
     "error": {
       "cannot_connect": "Cannot connect to Vigicrues API",
+      "search_unavailable": "Cannot connect to the Hub'Eau search service",
+      "search_required": "Enter a place or watercourse name",
+      "no_stations_found": "No active stations found. Try another search term or enter a station ID manually.",
+      "no_stations_selected": "Select at least one station",
+      "station_unavailable": "One or more selected stations are unavailable in Vigicrues. Change your selection.",
       "invalid_station": "Invalid station ID",
       "unknown": "Unknown error"
     },

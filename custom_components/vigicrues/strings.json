@@ -12,7 +12,14 @@
   "config": {
     "step": {
       "user": {
-        "title": "Configuration de Vigicrues",
+        "title": "Ajouter des stations Vigicrues",
+        "menu_options": {
+          "search": "Rechercher une station",
+          "manual": "Saisir des identifiants ou URLs"
+        }
+      },
+      "manual": {
+        "title": "Saisie manuelle des stations",
         "description": "Entrez les identifiants ou les URLs des stations que vous souhaitez surveiller (séparés par des virgules). Vous pouvez également laisser vide et ajouter les stations plus tard. Vous pouvez copier l'URL depuis https://www.vigicrues.gouv.fr/",
         "data": {
           "stations": "Stations (IDs ou URLs) - optionnel"
@@ -20,10 +27,29 @@
         "data_description": {
           "stations": "Liste d'identifiants ou d'URLs de stations séparés par des virgules. Laissez vide pour configurer plus tard. Exemple : {stations_example}"
         }
+      },
+      "search": {
+        "title": "Rechercher des stations",
+        "description": "Recherchez par nom de lieu ou de cours d'eau. Seules les stations en service sont proposées.",
+        "data": {
+          "search": "Commune, lieu ou cours d'eau"
+        }
+      },
+      "select_stations": {
+        "title": "Sélectionner les stations",
+        "description": "Choisissez une ou plusieurs stations. Certaines stations Hub’Eau peuvent ne pas être disponibles dans Vigicrues.",
+        "data": {
+          "stations": "Stations"
+        }
       }
     },
     "error": {
       "cannot_connect": "Impossible de se connecter à l'API Vigicrues",
+      "search_unavailable": "Impossible de se connecter au service de recherche Hub'Eau",
+      "search_required": "Saisissez un nom de lieu ou de cours d'eau",
+      "no_stations_found": "Aucune station en service trouvée. Essayez un autre terme ou saisissez un identifiant manuellement.",
+      "no_stations_selected": "Sélectionnez au moins une station",
+      "station_unavailable": "Une ou plusieurs stations sélectionnées ne sont pas disponibles dans Vigicrues. Modifiez votre sélection.",
       "invalid_station": "Identifiant de station invalide",
       "unknown": "Erreur inconnue"
     },

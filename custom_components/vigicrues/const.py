@@ -3,6 +3,7 @@ from homeassistant.const import UnitOfLength
 DOMAIN = "vigicrues"
 CONF_STATIONS = "stations"
 VIGICRUES_URL = "https://www.vigicrues.gouv.fr"
+HUBEAU_STATIONS_API = "https://hubeau.eaufrance.fr/api/v2/hydrometrie/referentiel/stations"
 VIGICRUES_PICTURE = f"{VIGICRUES_URL}/ftp/niv3/photos"
 VIGICRUES_OBSERVATIONS_API = f"{VIGICRUES_URL}/services/observations.json/index.php"
 VIGICRUES_STATION_API = f"{VIGICRUES_URL}/services/station.json/index.php"
