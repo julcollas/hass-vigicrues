@@ -27,6 +27,12 @@ To add, modify or remove stations after installation:
 2. Find the **Vigicrues** integration
 3. Click **Configure**
 
+#### Update interval
+
+The integration refreshes station data every 30 minutes by default. In the
+integration options, choose a 15-, 30-, or 60-minute interval. A shorter
+interval uses more API requests.
+
 #### Configuration via YAML (legacy method, still supported)
 
 Add the following lines to your `configuration.yaml`:
