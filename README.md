@@ -27,6 +27,9 @@ To add, modify or remove stations after installation:
 2. Find the **Vigicrues** integration
 3. Click **Configure**, then choose **Add a station** or **Remove stations**
 
+Adding a station keeps the existing stations and accepts a station ID or URL.
+When removing stations, select one or more entries from the list.
+
 #### Configuration via YAML (legacy method, still supported)
 
 Add the following lines to your `configuration.yaml`:
