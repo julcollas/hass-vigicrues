@@ -25,7 +25,7 @@ You can also copy the URL directly from your browser.
 To add, modify or remove stations after installation:
 1. Go to **Settings** → **Devices & Services**
 2. Find the **Vigicrues** integration
-3. Click **Configure**
+3. Click **Configure**, then choose **Add a station** or **Remove stations**
 
 #### Configuration via YAML (legacy method, still supported)
 

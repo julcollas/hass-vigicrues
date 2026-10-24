@@ -35,17 +35,33 @@
     "step": {
       "init": {
         "title": "Modifier la configuration de Vigicrues",
-        "description": "Modifiez les identifiants ou les URLs des stations que vous souhaitez surveiller (séparés par des virgules). Laissez vide pour supprimer toutes les stations.",
+        "menu_options": {
+          "add_station": "Ajouter une station",
+          "remove_stations": "Retirer des stations"
+        }
+      },
+      "add_station": {
+        "title": "Ajouter une station",
+        "description": "Ajoutez une station à la liste existante sans remplacer les autres.",
         "data": {
-          "stations": "Stations (IDs ou URLs) - optionnel"
+          "stations": "Identifiant ou URL de la station"
         },
         "data_description": {
-          "stations": "Liste d'identifiants ou d'URLs de stations séparés par des virgules. Laissez vide pour supprimer toutes les stations. Exemple : {stations_example}"
+          "stations": "Exemple : {stations_example}"
+        }
+      },
+      "remove_stations": {
+        "title": "Retirer des stations",
+        "description": "Sélectionnez les stations à retirer de l'intégration.",
+        "data": {
+          "stations_to_remove": "Stations à retirer"
         }
       }
     },
     "error": {
       "cannot_connect": "Impossible de se connecter à l'API Vigicrues",
+      "already_added": "Cette station est déjà configurée",
+      "no_stations_selected": "Sélectionnez au moins une station à retirer",
       "invalid_station": "Identifiant de station invalide",
       "unknown": "Erreur inconnue"
     }
