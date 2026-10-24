@@ -37,7 +37,8 @@
         "title": "Modify Vigicrues Configuration",
         "description": "Modify the station IDs or URLs you want to monitor (comma-separated). Leave empty to remove all stations.",
         "data": {
-          "stations": "Stations (IDs or URLs) - optional"
+          "stations": "Stations (IDs or URLs) - optional",
+          "scan_interval": "Update interval"
         },
         "data_description": {
           "stations": "List of station IDs or URLs separated by commas. Leave empty to remove all stations. Example: {stations_example}"

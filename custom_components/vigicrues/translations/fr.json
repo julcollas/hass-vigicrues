@@ -37,7 +37,8 @@
         "title": "Modifier la configuration de Vigicrues",
         "description": "Modifiez les identifiants ou les URLs des stations que vous souhaitez surveiller (séparés par des virgules). Laissez vide pour supprimer toutes les stations.",
         "data": {
-          "stations": "Stations (IDs ou URLs) - optionnel"
+          "stations": "Stations (IDs ou URLs) - optionnel",
+          "scan_interval": "Fréquence de mise à jour"
         },
         "data_description": {
           "stations": "Liste d'identifiants ou d'URLs de stations séparés par des virgules. Laissez vide pour supprimer toutes les stations. Exemple : {stations_example}"

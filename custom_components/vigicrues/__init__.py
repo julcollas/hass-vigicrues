@@ -8,7 +8,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import device_registry as dr
 
-from .const import CONF_STATIONS, DOMAIN
+from .const import CONF_SCAN_INTERVAL, CONF_STATIONS, DEFAULT_SCAN_INTERVAL, DOMAIN
 from .coordinator import VigicruesDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
@@ -25,9 +25,12 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Create coordinators for each station
     coordinators: dict[str, VigicruesDataUpdateCoordinator] = {}
     stations = entry.data.get(CONF_STATIONS, [])
+    scan_interval = entry.data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
 
     for station_id in stations:
-        coordinator = VigicruesDataUpdateCoordinator(hass, station_id)
+        coordinator = VigicruesDataUpdateCoordinator(
+            hass, station_id, scan_interval
+        )
         await coordinator.async_config_entry_first_refresh()
         coordinators[station_id] = coordinator
 

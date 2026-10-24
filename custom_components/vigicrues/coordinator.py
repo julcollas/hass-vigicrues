@@ -19,7 +19,9 @@ _LOGGER = logging.getLogger(__name__)
 class VigicruesDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Class to manage fetching Vigicrues data."""
 
-    def __init__(self, hass: HomeAssistant, station_id: str) -> None:
+    def __init__(
+        self, hass: HomeAssistant, station_id: str, scan_interval: int
+    ) -> None:
         """Initialize the coordinator."""
         self.station_id = station_id
         self.station_name: str | None = None
@@ -29,7 +31,7 @@ class VigicruesDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             hass,
             _LOGGER,
             name=f"Vigicrues {station_id}",
-            update_interval=timedelta(minutes=30),
+            update_interval=timedelta(minutes=scan_interval),
         )
 
     def get_entity_picture(self) -> str:
