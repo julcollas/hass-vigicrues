@@ -15,7 +15,14 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 
-from .const import CONF_STATIONS, DOMAIN, VIGICRUES_OBSERVATIONS_API
+from .const import (
+    CONF_SCAN_INTERVAL,
+    CONF_STATIONS,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    SCAN_INTERVAL_OPTIONS,
+    VIGICRUES_OBSERVATIONS_API,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -162,7 +169,10 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
                 # Update the config entry
                 self.hass.config_entries.async_update_entry(
                     self.config_entry,
-                    data={CONF_STATIONS: stations},
+                    data={
+                        CONF_STATIONS: stations,
+                        CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                    },
                 )
 
                 return self.async_create_entry(title="", data={})
@@ -177,12 +187,18 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
         # Get current stations from config entry
         current_stations = self.config_entry.data.get(CONF_STATIONS, [])
         stations_str = ", ".join(current_stations)
+        current_scan_interval = self.config_entry.data.get(
+            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+        )
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
                     vol.Optional(CONF_STATIONS, default=stations_str): str,
+                    vol.Required(
+                        CONF_SCAN_INTERVAL, default=current_scan_interval
+                    ): vol.In(SCAN_INTERVAL_OPTIONS),
                 }
             ),
             description_placeholders={
