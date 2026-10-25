@@ -37,7 +37,8 @@
         "title": "Modifier la configuration de Vigicrues",
         "menu_options": {
           "add_station": "Ajouter une station",
-          "remove_stations": "Retirer des stations"
+          "remove_stations": "Retirer des stations",
+          "set_scan_interval": "Fréquence de mise à jour"
         }
       },
       "add_station": {
@@ -55,6 +56,13 @@
         "description": "Sélectionnez les stations à retirer de l'intégration.",
         "data": {
           "stations_to_remove": "Stations à retirer"
+        }
+      },
+      "set_scan_interval": {
+        "title": "Fréquence de mise à jour",
+        "description": "Choisissez la fréquence de récupération des données des stations.",
+        "data": {
+          "scan_interval": "Fréquence de mise à jour"
         }
       }
     },

@@ -15,7 +15,14 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 
-from .const import CONF_STATIONS, DOMAIN, VIGICRUES_OBSERVATIONS_API
+from .const import (
+    CONF_SCAN_INTERVAL,
+    CONF_STATIONS,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    SCAN_INTERVAL_OPTIONS,
+    VIGICRUES_OBSERVATIONS_API,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -144,7 +151,7 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
-        menu_options = ["add_station"]
+        menu_options = ["add_station", "set_scan_interval"]
         if self.config_entry.data.get(CONF_STATIONS, []):
             menu_options.append("remove_stations")
 
@@ -220,6 +227,37 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
                     vol.Required("stations_to_remove"): cv.multi_select(
                         {station_id: station_id for station_id in current_stations}
                     ),
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_set_scan_interval(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Set how often the station data is refreshed."""
+        errors: dict[str, str] = {}
+        current_scan_interval = self.config_entry.data.get(
+            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+        )
+
+        if user_input is not None:
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                data={
+                    **self.config_entry.data,
+                    CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                },
+            )
+            return self.async_create_entry(title="", data={})
+
+        return self.async_show_form(
+            step_id="set_scan_interval",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_SCAN_INTERVAL, default=current_scan_interval
+                    ): vol.In(SCAN_INTERVAL_OPTIONS),
                 }
             ),
             errors=errors,
