@@ -15,6 +15,7 @@ from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 
 from .const import (
+    CONF_BACK_TO_MENU,
     CONF_SCAN_INTERVAL,
     CONF_STATIONS,
     DEFAULT_SCAN_INTERVAL,
@@ -160,6 +161,8 @@ class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            if user_input.get(CONF_BACK_TO_MENU):
+                return await self.async_step_user()
             try:
                 # Parse the stations input (comma-separated)
                 stations_input = user_input.get(CONF_STATIONS, "")
@@ -189,6 +192,7 @@ class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema(
                 {
                     vol.Optional(CONF_STATIONS, default=""): str,
+                    vol.Optional(CONF_BACK_TO_MENU, default=False): bool,
                 }
             ),
             description_placeholders={
@@ -204,7 +208,9 @@ class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            search_term = user_input["search"].strip()
+            if user_input.get(CONF_BACK_TO_MENU):
+                return await self.async_step_user()
+            search_term = user_input.get("search", "").strip()
             if not search_term:
                 errors["base"] = "search_required"
             else:
@@ -221,7 +227,12 @@ class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         return self.async_show_form(
             step_id="search",
-            data_schema=vol.Schema({vol.Required("search"): str}),
+            data_schema=vol.Schema(
+                {
+                    vol.Optional("search", default=""): str,
+                    vol.Optional(CONF_BACK_TO_MENU, default=False): bool,
+                }
+            ),
             errors=errors,
         )
 
@@ -232,6 +243,8 @@ class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            if user_input.get(CONF_BACK_TO_MENU):
+                return await self.async_step_user()
             stations = user_input.get(CONF_STATIONS, [])
             self._selected_stations = stations
             if not stations:
@@ -256,7 +269,8 @@ class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     vol.Required(
                         CONF_STATIONS,
                         default=getattr(self, "_selected_stations", []),
-                    ): cv.multi_select(self._station_options)
+                    ): cv.multi_select(self._station_options),
+                    vol.Optional(CONF_BACK_TO_MENU, default=False): bool,
                 }
             ),
             errors=errors,
@@ -278,7 +292,7 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
-        menu_options = ["add_station", "set_scan_interval"]
+        menu_options = ["search_stations", "add_station", "set_scan_interval"]
         if self.config_entry.data.get(CONF_STATIONS, []):
             menu_options.append("remove_stations")
 
@@ -291,6 +305,8 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
         errors: dict[str, str] = {}
 
         if user_input is not None:
+            if user_input.get(CONF_BACK_TO_MENU):
+                return await self.async_step_init()
             try:
                 station_id = extract_station_id(user_input[CONF_STATIONS])
                 stations = list(self.config_entry.data.get(CONF_STATIONS, []))
@@ -314,7 +330,12 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
 
         return self.async_show_form(
             step_id="add_station",
-            data_schema=vol.Schema({vol.Required(CONF_STATIONS): str}),
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_STATIONS, default=""): str,
+                    vol.Optional(CONF_BACK_TO_MENU, default=False): bool,
+                }
+            ),
             description_placeholders={
                 "stations_example": "F700000103 or https://www.vigicrues.gouv.fr/station/F700000103"
             },
@@ -329,6 +350,8 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
         current_stations = list(self.config_entry.data.get(CONF_STATIONS, []))
 
         if user_input is not None:
+            if user_input.get(CONF_BACK_TO_MENU):
+                return await self.async_step_init()
             removed_stations = user_input.get("stations_to_remove", [])
             if not removed_stations:
                 errors["base"] = "no_stations_selected"
@@ -351,9 +374,98 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
             step_id="remove_stations",
             data_schema=vol.Schema(
                 {
-                    vol.Required("stations_to_remove"): cv.multi_select(
+                    vol.Optional("stations_to_remove", default=[]): cv.multi_select(
                         {station_id: station_id for station_id in current_stations}
                     ),
+                    vol.Optional(CONF_BACK_TO_MENU, default=False): bool,
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_search_stations(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Search for stations to add to the existing configuration."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            if user_input.get(CONF_BACK_TO_MENU):
+                return await self.async_step_init()
+            search_term = user_input.get("search", "").strip()
+            if not search_term:
+                errors["base"] = "search_required"
+            else:
+                try:
+                    self._station_options = await search_stations(
+                        self.hass, search_term
+                    )
+                    if not self._station_options:
+                        errors["base"] = "no_stations_found"
+                    else:
+                        return await self.async_step_add_searched_stations()
+                except CannotConnect:
+                    errors["base"] = "search_unavailable"
+
+        return self.async_show_form(
+            step_id="search_stations",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional("search", default=""): str,
+                    vol.Optional(CONF_BACK_TO_MENU, default=False): bool,
+                }
+            ),
+            errors=errors,
+        )
+
+    async def async_step_add_searched_stations(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Add selected search results without replacing existing stations."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            if user_input.get(CONF_BACK_TO_MENU):
+                return await self.async_step_init()
+            selected_stations = user_input.get(CONF_STATIONS, [])
+            self._selected_search_stations = selected_stations
+            existing_stations = list(self.config_entry.data.get(CONF_STATIONS, []))
+            new_stations = [
+                station_id
+                for station_id in selected_stations
+                if station_id not in existing_stations
+            ]
+
+            if not selected_stations:
+                errors["base"] = "no_stations_selected"
+            elif not new_stations:
+                errors["base"] = "already_added"
+            else:
+                try:
+                    for station_id in new_stations:
+                        await validate_station(self.hass, station_id)
+                    self.hass.config_entries.async_update_entry(
+                        self.config_entry,
+                        data={
+                            **self.config_entry.data,
+                            CONF_STATIONS: existing_stations + new_stations,
+                        },
+                    )
+                    return self.async_create_entry(title="", data={})
+                except CannotConnect:
+                    errors["base"] = "cannot_connect"
+                except InvalidStation:
+                    errors["base"] = "station_unavailable"
+
+        return self.async_show_form(
+            step_id="add_searched_stations",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(
+                        CONF_STATIONS,
+                        default=getattr(self, "_selected_search_stations", []),
+                    ): cv.multi_select(self._station_options),
+                    vol.Optional(CONF_BACK_TO_MENU, default=False): bool,
                 }
             ),
             errors=errors,
@@ -369,6 +481,8 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
         )
 
         if user_input is not None:
+            if user_input.get(CONF_BACK_TO_MENU):
+                return await self.async_step_init()
             self.hass.config_entries.async_update_entry(
                 self.config_entry,
                 data={
@@ -385,6 +499,7 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
                     vol.Required(
                         CONF_SCAN_INTERVAL, default=current_scan_interval
                     ): vol.In(SCAN_INTERVAL_OPTIONS),
+                    vol.Optional(CONF_BACK_TO_MENU, default=False): bool,
                 }
             ),
             errors=errors,

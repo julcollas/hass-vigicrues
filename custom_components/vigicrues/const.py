@@ -2,6 +2,7 @@ from homeassistant.const import UnitOfLength
 
 DOMAIN = "vigicrues"
 CONF_STATIONS = "stations"
+CONF_BACK_TO_MENU = "back_to_menu"
 CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 30
 SCAN_INTERVAL_OPTIONS = {15: "15 minutes", 30: "30 minutes", 60: "60 minutes"}
