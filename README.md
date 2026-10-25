@@ -13,11 +13,15 @@ Copy the `vigicrues` folder into `<config_dir>/custom_components/vigicrues/`.
 1. Go to **Settings** → **Devices & Services**
 2. Click **+ Add Integration**
 3. Search for **Vigicrues**
-4. Enter the stations you want to monitor (comma-separated), or leave empty to configure later
+4. Search by place or watercourse and select one or more stations, or choose manual entry for station IDs or URLs
    - **With URLs**: `https://www.vigicrues.gouv.fr/station/F700000103, https://www.vigicrues.gouv.fr/station/F704000101`
    - **With IDs**: `F700000103, F704000101`
    - **Mixed**: `F700000103, https://www.vigicrues.gouv.fr/station/F704000101`
 5. Click **Submit**
+
+Hub'Eau search results are checked against Vigicrues before setup. Some stations
+may not be available through Vigicrues; if validation fails, adjust the
+selection or use manual entry.
 
 Station IDs can be found on https://www.vigicrues.gouv.fr/
 You can also copy the URL directly from your browser.

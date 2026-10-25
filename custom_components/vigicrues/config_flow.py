@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
@@ -20,6 +19,7 @@ from .const import (
     CONF_STATIONS,
     DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    HUBEAU_STATIONS_API,
     SCAN_INTERVAL_OPTIONS,
     VIGICRUES_OBSERVATIONS_API,
 )
@@ -86,6 +86,62 @@ async def validate_station(hass: HomeAssistant, station_id: str) -> dict[str, An
         raise InvalidStation from err
 
 
+async def search_stations(hass: HomeAssistant, search_term: str) -> dict[str, str]:
+    """Search active stations by site name or watercourse through Hub'Eau."""
+    stations: dict[str, dict[str, Any]] = {}
+    fields = (
+        "code_station,libelle_station,libelle_site,libelle_commune,"
+        "libelle_cours_eau,en_service"
+    )
+
+    try:
+        for search_field in ("libelle_site", "libelle_cours_eau"):
+            response = await hass.async_add_executor_job(
+                lambda field=search_field: requests.get(
+                    HUBEAU_STATIONS_API,
+                    params={
+                        field: search_term,
+                        "en_service": 1,
+                        "fields": fields,
+                        "size": 100,
+                    },
+                    timeout=10,
+                )
+            )
+            response.raise_for_status()
+            for station in response.json().get("data", []):
+                station_id = station.get("code_station")
+                if station_id:
+                    stations[station_id] = station
+    except requests.exceptions.RequestException as err:
+        _LOGGER.error("Error searching stations through Hub'Eau: %s", err)
+        raise CannotConnect from err
+
+    choices: dict[str, str] = {}
+    sorted_stations = sorted(
+        stations.items(),
+        key=lambda item: (item[1].get("libelle_commune") or "", item[0]),
+    )[:100]
+    for station_id, station in sorted_stations:
+        name = station.get("libelle_station") or station.get("libelle_site") or station_id
+        details = [
+            value
+            for value in (
+                station.get("libelle_commune"),
+                station.get("libelle_cours_eau"),
+            )
+            if value
+        ]
+        label = (
+            f"{name} ({', '.join(details)}) [{station_id}]"
+            if details
+            else f"{name} [{station_id}]"
+        )
+        choices[station_id] = label
+
+    return choices
+
+
 class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Vigicrues."""
 
@@ -94,7 +150,13 @@ class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Choose between station search and manual entry."""
+        return self.async_show_menu(step_id="user", menu_options=["search", "manual"])
+
+    async def async_step_manual(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Configure stations by ID or URL."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
@@ -123,7 +185,7 @@ class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 errors["base"] = "unknown"
 
         return self.async_show_form(
-            step_id="user",
+            step_id="manual",
             data_schema=vol.Schema(
                 {
                     vol.Optional(CONF_STATIONS, default=""): str,
@@ -132,6 +194,71 @@ class VigicruesConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             description_placeholders={
                 "stations_example": "F704000101, https://www.vigicrues.gouv.fr/station/F700000103"
             },
+            errors=errors,
+        )
+
+    async def async_step_search(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Find stations by site, commune, or watercourse name."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            search_term = user_input["search"].strip()
+            if not search_term:
+                errors["base"] = "search_required"
+            else:
+                try:
+                    self._station_options = await search_stations(
+                        self.hass, search_term
+                    )
+                    if not self._station_options:
+                        errors["base"] = "no_stations_found"
+                    else:
+                        return await self.async_step_select_stations()
+                except CannotConnect:
+                    errors["base"] = "search_unavailable"
+
+        return self.async_show_form(
+            step_id="search",
+            data_schema=vol.Schema({vol.Required("search"): str}),
+            errors=errors,
+        )
+
+    async def async_step_select_stations(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Add selected stations after validating them against Vigicrues."""
+        errors: dict[str, str] = {}
+
+        if user_input is not None:
+            stations = user_input.get(CONF_STATIONS, [])
+            self._selected_stations = stations
+            if not stations:
+                errors["base"] = "no_stations_selected"
+            else:
+                try:
+                    for station_id in stations:
+                        await validate_station(self.hass, station_id)
+                    return self.async_create_entry(
+                        title="Vigicrues",
+                        data={CONF_STATIONS: stations},
+                    )
+                except CannotConnect:
+                    errors["base"] = "cannot_connect"
+                except InvalidStation:
+                    errors["base"] = "station_unavailable"
+
+        return self.async_show_form(
+            step_id="select_stations",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_STATIONS,
+                        default=getattr(self, "_selected_stations", []),
+                    ): cv.multi_select(self._station_options)
+                }
+            ),
             errors=errors,
         )
 
