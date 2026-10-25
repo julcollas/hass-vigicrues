@@ -22,8 +22,7 @@
         "title": "Saisie manuelle des stations",
         "description": "Entrez les identifiants ou les URLs des stations que vous souhaitez surveiller (séparés par des virgules). Vous pouvez également laisser vide et ajouter les stations plus tard. Vous pouvez copier l'URL depuis https://www.vigicrues.gouv.fr/",
         "data": {
-          "stations": "Stations (IDs ou URLs) - optionnel",
-          "back_to_menu": "Retour au menu précédent"
+          "stations": "Stations (IDs ou URLs) - optionnel"
         },
         "data_description": {
           "stations": "Liste d'identifiants ou d'URLs de stations séparés par des virgules. Laissez vide pour configurer plus tard. Exemple : {stations_example}"
@@ -33,16 +32,14 @@
         "title": "Rechercher des stations",
         "description": "Recherchez par nom de lieu ou de cours d'eau. Seules les stations en service sont proposées.",
         "data": {
-          "search": "Commune, lieu ou cours d'eau",
-          "back_to_menu": "Retour au menu précédent"
+          "search": "Commune, lieu ou cours d'eau"
         }
       },
       "select_stations": {
         "title": "Sélectionner les stations",
         "description": "Choisissez une ou plusieurs stations. Certaines stations Hub’Eau peuvent ne pas être disponibles dans Vigicrues.",
         "data": {
-          "stations": "Stations",
-          "back_to_menu": "Retour au menu précédent"
+          "stations": "Stations"
         }
       }
     },
@@ -65,59 +62,52 @@
       "init": {
         "title": "Modifier la configuration de Vigicrues",
         "menu_options": {
-          "search_stations": "Rechercher une station",
-          "add_station": "Ajouter une station",
+          "manage_stations": "Rechercher ou ajouter une station",
           "remove_stations": "Retirer des stations",
           "set_scan_interval": "Fréquence de mise à jour"
         }
       },
-      "add_station": {
-        "title": "Ajouter une station",
-        "description": "Ajoutez une station à la liste existante sans remplacer les autres.",
+      "manage_stations": {
+        "title": "Rechercher ou ajouter une station",
+        "description": "Recherchez par lieu ou cours d'eau, ou saisissez un identifiant ou une URL de station.",
         "data": {
-          "stations": "Identifiant ou URL de la station",
-          "back_to_menu": "Retour au menu précédent"
+          "search": "Rechercher par commune, lieu ou cours d'eau",
+          "station_id": "Ou saisir un identifiant ou une URL"
         },
         "data_description": {
-          "stations": "Exemple : {stations_example}"
+          "station_id": "Exemple : {stations_example}"
         }
       },
       "remove_stations": {
         "title": "Retirer des stations",
         "description": "Sélectionnez les stations à retirer de l'intégration.",
         "data": {
-          "stations_to_remove": "Stations à retirer",
-          "back_to_menu": "Retour au menu précédent"
-        }
-      },
-      "search_stations": {
-        "title": "Rechercher des stations",
-        "description": "Recherchez par nom de lieu ou de cours d'eau. Les stations sélectionnées seront ajoutées à la liste existante.",
-        "data": {
-          "search": "Commune, lieu ou cours d'eau",
-          "back_to_menu": "Retour au menu précédent"
+          "stations_to_remove": "Stations à retirer"
         }
       },
       "add_searched_stations": {
         "title": "Sélectionner les stations",
         "description": "Choisissez une ou plusieurs stations à ajouter.",
         "data": {
-          "stations": "Stations",
-          "back_to_menu": "Retour au menu précédent"
+          "stations": "Stations"
         }
       },
       "set_scan_interval": {
         "title": "Fréquence de mise à jour",
         "description": "Choisissez la fréquence de récupération des données des stations.",
         "data": {
-          "scan_interval": "Fréquence de mise à jour",
-          "back_to_menu": "Retour au menu précédent"
+          "scan_interval": "Fréquence de mise à jour"
         }
       }
     },
     "error": {
       "cannot_connect": "Impossible de se connecter à l'API Vigicrues",
       "already_added": "Cette station est déjà configurée",
+      "search_or_station_required": "Saisissez un terme de recherche ou un identifiant de station",
+      "choose_one_input": "Utilisez soit la recherche, soit l'identifiant manuel, pas les deux",
+      "search_unavailable": "Impossible de se connecter au service de recherche Hub'Eau",
+      "no_stations_found": "Aucune station en service trouvée",
+      "station_unavailable": "Une ou plusieurs stations sélectionnées ne sont pas disponibles dans Vigicrues",
       "no_stations_selected": "Sélectionnez au moins une station à retirer",
       "invalid_station": "Identifiant de station invalide",
       "unknown": "Erreur inconnue"

@@ -29,7 +29,7 @@ You can also copy the URL directly from your browser.
 To add, modify or remove stations after installation:
 1. Go to **Settings** → **Devices & Services**
 2. Find the **Vigicrues** integration
-3. Click **Configure**, then choose **Search for stations**, **Add a station**, or **Remove stations**
+3. Click **Configure**, then choose **Search or add a station**, **Update interval**, or **Remove stations**
 
 Search by place or watercourse to find stations through Hub'Eau. Selected,
 Vigicrues-compatible stations are added to the existing list. Manual station IDs
