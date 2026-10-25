@@ -124,21 +124,13 @@ async def search_stations(hass: HomeAssistant, search_term: str) -> dict[str, st
         key=lambda item: (item[1].get("libelle_commune") or "", item[0]),
     )[:100]
     for station_id, station in sorted_stations:
-        name = station.get("libelle_station") or station.get("libelle_site") or station_id
-        details = [
-            value
-            for value in (
-                station.get("libelle_commune"),
-                station.get("libelle_cours_eau"),
-            )
-            if value
-        ]
-        label = (
-            f"{name} ({', '.join(details)}) [{station_id}]"
-            if details
-            else f"{name} [{station_id}]"
+        name = (
+            station.get("libelle_station") or station.get("libelle_site") or station_id
         )
-        choices[station_id] = label
+        name = " ".join(name.split())
+        if len(name) > 36:
+            name = f"{name[:33].rstrip()}..."
+        choices[station_id] = f"{name} [{station_id}]"
 
     return choices
 
