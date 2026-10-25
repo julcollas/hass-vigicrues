@@ -13,6 +13,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
+from homeassistant.helpers import device_registry as dr
 
 from .const import (
     CONF_SCAN_INTERVAL,
@@ -353,6 +354,22 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
         """Remove selected stations without changing the remaining ones."""
         errors: dict[str, str] = {}
         current_stations = list(self.config_entry.data.get(CONF_STATIONS, []))
+        device_registry = dr.async_get(self.hass)
+        station_options: dict[str, str] = {}
+
+        for station_id in current_stations:
+            device = device_registry.async_get_device(
+                identifiers={(DOMAIN, station_id)}
+            )
+            device_name = (device.name_by_user or device.name) if device else None
+            if device_name and device and not device.name_by_user:
+                suffix = f" - {station_id}"
+                if device_name.endswith(suffix):
+                    device_name = device_name[: -len(suffix)]
+
+            station_options[station_id] = (
+                f"{device_name} ({station_id})" if device_name else station_id
+            )
 
         if user_input is not None:
             removed_stations = user_input.get("stations_to_remove", [])
@@ -378,7 +395,7 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
             data_schema=vol.Schema(
                 {
                     vol.Optional("stations_to_remove", default=[]): cv.multi_select(
-                        {station_id: station_id for station_id in current_stations}
+                        station_options
                     ),
                 }
             ),
