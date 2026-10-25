@@ -22,7 +22,8 @@
         "title": "Enter stations manually",
         "description": "Enter the station IDs or URLs you want to monitor (comma-separated). You can also leave empty and add stations later. You can copy the URL from https://www.vigicrues.gouv.fr/",
         "data": {
-          "stations": "Stations (IDs or URLs) - optional"
+          "stations": "Stations (IDs or URLs) - optional",
+          "back_to_menu": "Back to previous menu"
         },
         "data_description": {
           "stations": "List of station IDs or URLs separated by commas. Leave empty to configure later. Example: {stations_example}"
@@ -32,14 +33,16 @@
         "title": "Search for stations",
         "description": "Search by place or watercourse name. Only active stations are shown.",
         "data": {
-          "search": "Commune, place, or watercourse"
+          "search": "Commune, place, or watercourse",
+          "back_to_menu": "Back to previous menu"
         }
       },
       "select_stations": {
         "title": "Select stations",
         "description": "Choose one or more stations. Some Hub'Eau stations may not be available in Vigicrues.",
         "data": {
-          "stations": "Stations"
+          "stations": "Stations",
+          "back_to_menu": "Back to previous menu"
         }
       }
     },
@@ -62,6 +65,7 @@
       "init": {
         "title": "Modify Vigicrues Configuration",
         "menu_options": {
+          "search_stations": "Search for a station",
           "add_station": "Add a station",
           "remove_stations": "Remove stations",
           "set_scan_interval": "Update interval"
@@ -71,7 +75,8 @@
         "title": "Add a station",
         "description": "Add a station to the existing list without replacing the others.",
         "data": {
-          "stations": "Station ID or URL"
+          "stations": "Station ID or URL",
+          "back_to_menu": "Back to previous menu"
         },
         "data_description": {
           "stations": "Example: {stations_example}"
@@ -81,14 +86,32 @@
         "title": "Remove stations",
         "description": "Select stations to remove from the integration.",
         "data": {
-          "stations_to_remove": "Stations to remove"
+          "stations_to_remove": "Stations to remove",
+          "back_to_menu": "Back to previous menu"
+        }
+      },
+      "search_stations": {
+        "title": "Search for stations",
+        "description": "Search by place or watercourse name. Selected stations will be added to the existing list.",
+        "data": {
+          "search": "Commune, place, or watercourse",
+          "back_to_menu": "Back to previous menu"
+        }
+      },
+      "add_searched_stations": {
+        "title": "Select stations",
+        "description": "Choose one or more stations to add.",
+        "data": {
+          "stations": "Stations",
+          "back_to_menu": "Back to previous menu"
         }
       },
       "set_scan_interval": {
         "title": "Update interval",
         "description": "Choose how often station data is refreshed.",
         "data": {
-          "scan_interval": "Update interval"
+          "scan_interval": "Update interval",
+          "back_to_menu": "Back to previous menu"
         }
       }
     },
