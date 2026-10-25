@@ -128,8 +128,9 @@ async def search_stations(hass: HomeAssistant, search_term: str) -> dict[str, st
             station.get("libelle_station") or station.get("libelle_site") or station_id
         )
         name = " ".join(name.split())
-        if len(name) > 36:
-            name = f"{name[:33].rstrip()}..."
+        parenthesis_index = name.rfind(" (")
+        if parenthesis_index != -1 and name.endswith(")"):
+            name = name[:parenthesis_index].rstrip()
         choices[station_id] = f"{name} [{station_id}]"
 
     return choices
