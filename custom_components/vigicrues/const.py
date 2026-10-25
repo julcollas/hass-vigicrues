@@ -2,6 +2,9 @@ from homeassistant.const import UnitOfLength
 
 DOMAIN = "vigicrues"
 CONF_STATIONS = "stations"
+CONF_SCAN_INTERVAL = "scan_interval"
+DEFAULT_SCAN_INTERVAL = 30
+SCAN_INTERVAL_OPTIONS = {15: "15 minutes", 30: "30 minutes", 60: "60 minutes"}
 VIGICRUES_URL = "https://www.vigicrues.gouv.fr"
 HUBEAU_STATIONS_API = "https://hubeau.eaufrance.fr/api/v2/hydrometrie/referentiel/stations"
 VIGICRUES_PICTURE = f"{VIGICRUES_URL}/ftp/niv3/photos"

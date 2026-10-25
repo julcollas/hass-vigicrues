@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import logging
-import re
 from typing import Any
 from urllib.parse import parse_qs, urlparse
 
@@ -16,9 +15,12 @@ from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 
 from .const import (
+    CONF_SCAN_INTERVAL,
     CONF_STATIONS,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
     HUBEAU_STATIONS_API,
+    SCAN_INTERVAL_OPTIONS,
     VIGICRUES_OBSERVATIONS_API,
 )
 
@@ -276,28 +278,32 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
         """Manage the options."""
+        menu_options = ["add_station", "set_scan_interval"]
+        if self.config_entry.data.get(CONF_STATIONS, []):
+            menu_options.append("remove_stations")
+
+        return self.async_show_menu(step_id="init", menu_options=menu_options)
+
+    async def async_step_add_station(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Add one station without replacing the existing station list."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
             try:
-                # Parse the stations input (comma-separated)
-                stations_input = user_input.get(CONF_STATIONS, "")
-                raw_stations = [s.strip() for s in stations_input.split(",") if s.strip()]
-
-                # Extract station IDs from URLs or direct IDs
-                stations = [extract_station_id(s) for s in raw_stations]
-
-                # Validate all stations if any provided
-                for station_id in stations:
+                station_id = extract_station_id(user_input[CONF_STATIONS])
+                stations = list(self.config_entry.data.get(CONF_STATIONS, []))
+                if station_id in stations:
+                    errors["base"] = "already_added"
+                else:
                     await validate_station(self.hass, station_id)
-
-                # Update the config entry
-                self.hass.config_entries.async_update_entry(
-                    self.config_entry,
-                    data={CONF_STATIONS: stations},
-                )
-
-                return self.async_create_entry(title="", data={})
+                    stations.append(station_id)
+                    self.hass.config_entries.async_update_entry(
+                        self.config_entry,
+                        data={**self.config_entry.data, CONF_STATIONS: stations},
+                    )
+                    return self.async_create_entry(title="", data={})
             except CannotConnect:
                 errors["base"] = "cannot_connect"
             except InvalidStation:
@@ -306,20 +312,81 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
                 _LOGGER.exception("Unexpected exception")
                 errors["base"] = "unknown"
 
-        # Get current stations from config entry
-        current_stations = self.config_entry.data.get(CONF_STATIONS, [])
-        stations_str = ", ".join(current_stations)
+        return self.async_show_form(
+            step_id="add_station",
+            data_schema=vol.Schema({vol.Required(CONF_STATIONS): str}),
+            description_placeholders={
+                "stations_example": "F700000103 or https://www.vigicrues.gouv.fr/station/F700000103"
+            },
+            errors=errors,
+        )
+
+    async def async_step_remove_stations(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Remove selected stations without changing the remaining ones."""
+        errors: dict[str, str] = {}
+        current_stations = list(self.config_entry.data.get(CONF_STATIONS, []))
+
+        if user_input is not None:
+            removed_stations = user_input.get("stations_to_remove", [])
+            if not removed_stations:
+                errors["base"] = "no_stations_selected"
+            else:
+                remaining_stations = [
+                    station_id
+                    for station_id in current_stations
+                    if station_id not in removed_stations
+                ]
+                self.hass.config_entries.async_update_entry(
+                    self.config_entry,
+                    data={
+                        **self.config_entry.data,
+                        CONF_STATIONS: remaining_stations,
+                    },
+                )
+                return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
-            step_id="init",
+            step_id="remove_stations",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(CONF_STATIONS, default=stations_str): str,
+                    vol.Required("stations_to_remove"): cv.multi_select(
+                        {station_id: station_id for station_id in current_stations}
+                    ),
                 }
             ),
-            description_placeholders={
-                "stations_example": "F700000103, https://www.vigicrues.gouv.fr/station/F700000103"
-            },
+            errors=errors,
+        )
+
+    async def async_step_set_scan_interval(
+        self, user_input: dict[str, Any] | None = None
+    ) -> FlowResult:
+        """Set how often the station data is refreshed."""
+        errors: dict[str, str] = {}
+        current_scan_interval = self.config_entry.data.get(
+            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+        )
+
+        if user_input is not None:
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                data={
+                    **self.config_entry.data,
+                    CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                },
+            )
+            return self.async_create_entry(title="", data={})
+
+        return self.async_show_form(
+            step_id="set_scan_interval",
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_SCAN_INTERVAL, default=current_scan_interval
+                    ): vol.In(SCAN_INTERVAL_OPTIONS),
+                }
+            ),
             errors=errors,
         )
 

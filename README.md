@@ -29,7 +29,16 @@ You can also copy the URL directly from your browser.
 To add, modify or remove stations after installation:
 1. Go to **Settings** → **Devices & Services**
 2. Find the **Vigicrues** integration
-3. Click **Configure**
+3. Click **Configure**, then choose **Add a station** or **Remove stations**
+
+Adding a station keeps the existing stations and accepts a station ID or URL.
+When removing stations, select one or more entries from the list.
+
+#### Update interval
+
+The integration refreshes station data every 30 minutes by default. In the
+integration options, choose a 15-, 30-, or 60-minute interval. A shorter
+interval uses more API requests.
 
 #### Configuration via YAML (legacy method, still supported)
 
