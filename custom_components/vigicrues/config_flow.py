@@ -14,6 +14,7 @@ from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers import device_registry as dr
+from homeassistant.helpers import selector
 
 from .const import (
     CONF_SCAN_INTERVAL,
@@ -453,28 +454,42 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
         current_scan_interval = self.config_entry.data.get(
             CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
         )
+        try:
+            current_scan_interval = int(current_scan_interval)
+        except (TypeError, ValueError):
+            current_scan_interval = DEFAULT_SCAN_INTERVAL
+        if current_scan_interval not in SCAN_INTERVAL_OPTIONS:
+            current_scan_interval = DEFAULT_SCAN_INTERVAL
 
         if user_input is not None:
             self.hass.config_entries.async_update_entry(
                 self.config_entry,
                 data={
                     **self.config_entry.data,
-                    CONF_SCAN_INTERVAL: user_input[CONF_SCAN_INTERVAL],
+                    CONF_SCAN_INTERVAL: int(user_input[CONF_SCAN_INTERVAL]),
                 },
             )
             return self.async_create_entry(title="", data={})
 
         return self.async_show_form(
             step_id="set_scan_interval",
-            data_schema=self.add_suggested_values_to_schema(
-                vol.Schema(
-                    {
-                        vol.Required(CONF_SCAN_INTERVAL): vol.In(
-                            SCAN_INTERVAL_OPTIONS
-                        ),
-                    }
-                ),
-                {CONF_SCAN_INTERVAL: current_scan_interval},
+            data_schema=vol.Schema(
+                {
+                    vol.Required(
+                        CONF_SCAN_INTERVAL,
+                        default=str(current_scan_interval),
+                    ): selector.SelectSelector(
+                        selector.SelectSelectorConfig(
+                            options=[
+                                selector.SelectOptionDict(
+                                    value=str(interval), label=label
+                                )
+                                for interval, label in SCAN_INTERVAL_OPTIONS.items()
+                            ],
+                            mode=selector.SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
+                }
             ),
             errors=errors,
         )
