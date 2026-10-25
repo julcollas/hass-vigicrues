@@ -22,8 +22,7 @@
         "title": "Enter stations manually",
         "description": "Enter the station IDs or URLs you want to monitor (comma-separated). You can also leave empty and add stations later. You can copy the URL from https://www.vigicrues.gouv.fr/",
         "data": {
-          "stations": "Stations (IDs or URLs) - optional",
-          "back_to_menu": "Back to previous menu"
+          "stations": "Stations (IDs or URLs) - optional"
         },
         "data_description": {
           "stations": "List of station IDs or URLs separated by commas. Leave empty to configure later. Example: {stations_example}"
@@ -33,16 +32,14 @@
         "title": "Search for stations",
         "description": "Search by place or watercourse name. Only active stations are shown.",
         "data": {
-          "search": "Commune, place, or watercourse",
-          "back_to_menu": "Back to previous menu"
+          "search": "Commune, place, or watercourse"
         }
       },
       "select_stations": {
         "title": "Select stations",
         "description": "Choose one or more stations. Some Hub'Eau stations may not be available in Vigicrues.",
         "data": {
-          "stations": "Stations",
-          "back_to_menu": "Back to previous menu"
+          "stations": "Stations"
         }
       }
     },
@@ -65,59 +62,52 @@
       "init": {
         "title": "Modify Vigicrues Configuration",
         "menu_options": {
-          "search_stations": "Search for a station",
-          "add_station": "Add a station",
+          "manage_stations": "Search or add a station",
           "remove_stations": "Remove stations",
           "set_scan_interval": "Update interval"
         }
       },
-      "add_station": {
-        "title": "Add a station",
-        "description": "Add a station to the existing list without replacing the others.",
+      "manage_stations": {
+        "title": "Search or add a station",
+        "description": "Search by place or watercourse, or enter a station ID or URL.",
         "data": {
-          "stations": "Station ID or URL",
-          "back_to_menu": "Back to previous menu"
+          "search": "Search by commune, place, or watercourse",
+          "station_id": "Or enter a station ID or URL"
         },
         "data_description": {
-          "stations": "Example: {stations_example}"
+          "station_id": "Example: {stations_example}"
         }
       },
       "remove_stations": {
         "title": "Remove stations",
         "description": "Select stations to remove from the integration.",
         "data": {
-          "stations_to_remove": "Stations to remove",
-          "back_to_menu": "Back to previous menu"
-        }
-      },
-      "search_stations": {
-        "title": "Search for stations",
-        "description": "Search by place or watercourse name. Selected stations will be added to the existing list.",
-        "data": {
-          "search": "Commune, place, or watercourse",
-          "back_to_menu": "Back to previous menu"
+          "stations_to_remove": "Stations to remove"
         }
       },
       "add_searched_stations": {
         "title": "Select stations",
         "description": "Choose one or more stations to add.",
         "data": {
-          "stations": "Stations",
-          "back_to_menu": "Back to previous menu"
+          "stations": "Stations"
         }
       },
       "set_scan_interval": {
         "title": "Update interval",
         "description": "Choose how often station data is refreshed.",
         "data": {
-          "scan_interval": "Update interval",
-          "back_to_menu": "Back to previous menu"
+          "scan_interval": "Update interval"
         }
       }
     },
     "error": {
       "cannot_connect": "Cannot connect to Vigicrues API",
       "already_added": "This station is already configured",
+      "search_or_station_required": "Enter a search term or station ID",
+      "choose_one_input": "Use either search or a manual station ID, not both",
+      "search_unavailable": "Cannot connect to the Hub'Eau search service",
+      "no_stations_found": "No active stations found",
+      "station_unavailable": "One or more selected stations are unavailable in Vigicrues",
       "no_stations_selected": "Select at least one station to remove",
       "invalid_station": "Invalid station ID",
       "unknown": "Unknown error"
