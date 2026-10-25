@@ -473,12 +473,15 @@ class VigicruesOptionsFlow(config_entries.OptionsFlowWithConfigEntry):
 
         return self.async_show_form(
             step_id="set_scan_interval",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(
-                        CONF_SCAN_INTERVAL, default=current_scan_interval
-                    ): vol.In(SCAN_INTERVAL_OPTIONS),
-                }
+            data_schema=self.add_suggested_values_to_schema(
+                vol.Schema(
+                    {
+                        vol.Required(CONF_SCAN_INTERVAL): vol.In(
+                            SCAN_INTERVAL_OPTIONS
+                        ),
+                    }
+                ),
+                {CONF_SCAN_INTERVAL: current_scan_interval},
             ),
             errors=errors,
         )
