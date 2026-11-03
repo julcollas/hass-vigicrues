@@ -255,13 +255,15 @@ class VigicruesCoordinatorHeightSensor(CoordinatorEntity, SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        coordinates = self.coordinator.data.get("coordinates", (None, None))
-        return {
-            ATTR_LONGITUDE: coordinates[0],
-            ATTR_LATITUDE: coordinates[1],
+        attributes = {
             "station_id": self.coordinator.station_id,
             "type": "H",
         }
+        coordinates = self.coordinator.data.get("coordinates")
+        if coordinates:
+            attributes[ATTR_LONGITUDE] = coordinates[0]
+            attributes[ATTR_LATITUDE] = coordinates[1]
+        return attributes
 
 
 class VigicruesCoordinatorWaterFlowRateSensor(CoordinatorEntity, SensorEntity):
@@ -307,10 +309,12 @@ class VigicruesCoordinatorWaterFlowRateSensor(CoordinatorEntity, SensorEntity):
     @property
     def extra_state_attributes(self):
         """Return the state attributes."""
-        coordinates = self.coordinator.data.get("coordinates", (None, None))
-        return {
-            ATTR_LONGITUDE: coordinates[0],
-            ATTR_LATITUDE: coordinates[1],
+        attributes = {
             "station_id": self.coordinator.station_id,
             "type": "Q",
         }
+        coordinates = self.coordinator.data.get("coordinates")
+        if coordinates:
+            attributes[ATTR_LONGITUDE] = coordinates[0]
+            attributes[ATTR_LATITUDE] = coordinates[1]
+        return attributes
