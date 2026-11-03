@@ -45,6 +45,10 @@ class VigicruesDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             if self.station_name is None:
                 await self._async_fetch_station_info()
 
+            # Retry coordinates on later updates if they are still missing
+            if self.coordinates is None:
+                await self._async_fetch_coordinates()
+
             # Fetch observations data
             height = await self._async_fetch_observation("H")
             waterflowrate = await self._async_fetch_observation("Q")
@@ -76,7 +80,15 @@ class VigicruesDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 f"{serie_data.get('LbStationHydro')} - {serie_data.get('CdStationHydro')}"
             )
 
-            # Get coordinates
+        except requests.exceptions.RequestException as err:
+            _LOGGER.error(
+                "Error fetching station info for %s: %s", self.station_id, err
+            )
+            raise
+
+    async def _async_fetch_coordinates(self) -> None:
+        """Fetch station coordinates from Vigicrues API."""
+        try:
             coord_response = await self.hass.async_add_executor_job(
                 lambda: requests.get(
                     VIGICRUES_STATION_API,
@@ -86,20 +98,22 @@ class VigicruesDataUpdateCoordinator(DataUpdateCoordinator[dict[str, Any]]):
             )
             coord_response.raise_for_status()
             coord_data = coord_response.json()
-
-            coordstation = coord_data.get("CoordStationHydro", {})
-            coordx = int(coordstation.get("CoordXStationHydro", 0))
-            coordy = int(coordstation.get("CoordYStationHydro", 0))
-
-            # Coordinate transformation
-            latitude, longitude = lambert93_to_wgs84(coordx, coordy)
-            self.coordinates = (longitude, latitude)
-
         except requests.exceptions.RequestException as err:
-            _LOGGER.error(
-                "Error fetching station info for %s: %s", self.station_id, err
+            _LOGGER.warning(
+                "Error fetching coordinates for %s: %s", self.station_id, err
             )
-            raise
+            return
+
+        coordstation = coord_data.get("CoordStationHydro") or {}
+        coordx = coordstation.get("CoordXStationHydro")
+        coordy = coordstation.get("CoordYStationHydro")
+        if not coordx or not coordy:
+            _LOGGER.debug("No coordinates available for %s", self.station_id)
+            return
+
+        # Coordinate transformation
+        latitude, longitude = lambert93_to_wgs84(int(coordx), int(coordy))
+        self.coordinates = (longitude, latitude)
 
     async def _async_fetch_observation(self, observation_type: str) -> float | None:
         """Fetch observation data from Vigicrues API."""
